@@ -1,0 +1,339 @@
+/**
+ * 首页组件
+ */
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { BookOpen, Eye, Clock, Star, TrendingUp, Calendar, Search, Filter, SortAsc, Sparkles, Users, BookMarked } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useNovelStore } from '../store/novelStore';
+import type { Novel } from '../../shared/types';
+import heroBackground from '../assets/hero-bg.png';
+
+const Home = () => {
+  const { novels, loading, fetchNovels } = useNovelStore();
+  const [featuredNovels, setFeaturedNovels] = useState<Novel[]>([]);
+  const [popularNovels, setPopularNovels] = useState<Novel[]>([]);
+  const [latestNovels, setLatestNovels] = useState<Novel[]>([]);
+  const [filteredNovels, setFilteredNovels] = useState<Novel[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('全部');
+  const [sortBy, setSortBy] = useState('latest');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showFilters, setShowFilters] = useState(false);
+  
+  const categories = ['全部', '玄幻', '都市', '历史', '科幻', '言情', '武侠', '悬疑', '其他'];
+  const sortOptions = [
+    { value: 'latest', label: '最新更新' },
+    { value: 'popular', label: '最热门' },
+    { value: 'views', label: '最多浏览' },
+    { value: 'title', label: '按标题' }
+  ];
+  const novelsPerPage = 12;
+
+  // 模拟统计数据
+  const stats = {
+    totalNovels: novels.length || 156,
+    totalUsers: 2847,
+    totalViews: 1234567,
+    todayUpdates: 23
+  };
+
+  useEffect(() => {
+    fetchNovels();
+  }, [fetchNovels]);
+
+  useEffect(() => {
+    if (novels.length > 0) {
+      // 热门小说：按浏览量排序，取前6个
+      const popular = [...novels]
+        .sort((a, b) => (b.views || 0) - (a.views || 0))
+        .slice(0, 6);
+      setPopularNovels(popular);
+
+      // 最新更新：按更新时间排序，取前8个
+      const latest = [...novels]
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        .slice(0, 8);
+      setLatestNovels(latest);
+
+      // 精选推荐：取前6个热门小说，支持2行3列布局
+      setFeaturedNovels(popular.slice(0, 6));
+    }
+  }, [novels]);
+
+  // 英雄区域组件
+  const HeroSection = () => (
+    <motion.section 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="relative min-h-[80vh] flex items-center justify-center overflow-hidden hero-section"
+      style={{
+        backgroundImage: `url(${heroBackground})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* 渐变遮罩 */}
+      <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/80 via-blue-900/70 to-purple-900/80"></div>
+      
+      {/* 动态粒子效果 */}
+      <div className="absolute inset-0">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-2 h-2 bg-white/20 rounded-full"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              y: [0, -20, 0],
+              opacity: [0.2, 0.8, 0.2],
+            }}
+            transition={{
+              duration: 3 + Math.random() * 2,
+              repeat: Infinity,
+              delay: Math.random() * 2,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* 主要内容 */}
+      <div className="relative z-10 text-center text-white px-4 max-w-4xl mx-auto">
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8 }}
+          className="mb-8"
+        >
+          <h1 className="text-5xl md:text-7xl font-serif font-bold mb-6 gradient-text hero-title">
+            玉扶疏小说网
+          </h1>
+          <p className="text-xl md:text-2xl text-gray-200 mb-8 font-light hero-subtitle">
+            发现精彩故事，开启阅读之旅
+          </p>
+          <p className="text-lg text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed hero-description">
+            在这里，每一个故事都是一次心灵
+            
+            每一个故事都是一次心灵，每一页文字都承载着作者的匠心与读者的期待
+          </p>
+        </motion.div>
+
+        {/* 搜索栏 */}
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="mb-16"
+        >
+          <div className="relative max-w-3xl mx-auto">
+            <div className="glass-effect rounded-full p-2 neon-border search-container">
+              <div className="flex items-center">
+                <Search className="h-6 w-6 text-gray-400 ml-4" />
+                <input
+                  type="text"
+                  placeholder="搜索小说标题、作者或标签..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="flex-1 bg-transparent border-none outline-none px-4 py-3 text-white placeholder-gray-400 text-lg search-input"
+                />
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="gradient-button px-6 py-3 rounded-full mr-2 flex items-center space-x-2 search-button"
+                >
+                  <Filter className="h-5 w-5" />
+                  <span>筛选</span>
+                </motion.button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </motion.section>
+  );
+
+  // 空状态组件
+  const EmptyState = () => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="text-center py-20"
+    >
+      <motion.div
+        className="animate-float mb-8"
+      >
+        <BookOpen className="h-24 w-24 mx-auto text-gray-400 mb-6" />
+      </motion.div>
+      <h3 className="text-2xl font-serif font-semibold text-gray-600 mb-4">
+        还没有小说作品
+      </h3>
+      <p className="text-gray-500 mb-8 max-w-md mx-auto">
+        期待更多精彩作品的到来，成为第一个在这里分享故事的作者吧
+      </p>
+      <motion.div
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <Link
+          to="/register"
+          className="gradient-button px-8 py-3 rounded-full font-medium inline-flex items-center space-x-2"
+        >
+          <Sparkles className="h-5 w-5" />
+          <span>开始创作</span>
+        </Link>
+      </motion.div>
+    </motion.div>
+  );
+
+  return (
+    <div className="min-h-screen">
+      {/* 英雄区域 */}
+      <HeroSection />
+
+      {/* 主要内容区域 */}
+      <div className="container mx-auto px-4 py-8">
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full"
+            />
+          </div>
+        ) : novels.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <div className="space-y-16">
+            {/* 精选推荐 */}
+            {featuredNovels.length > 0 && (
+              <motion.section
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-3xl font-serif font-bold gradient-text flex items-center">
+                    <Star className="h-8 w-8 mr-3 text-yellow-500" />
+                    精选推荐
+                  </h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+                  {featuredNovels.map((novel, index) => (
+                    <motion.div
+                      key={novel.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, delay: index * 0.1 }}
+                      className="glass-effect rounded-2xl p-6 card-hover neon-border"
+                    >
+                      <div className="aspect-[3/4] bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl mb-4 flex items-center justify-center relative overflow-hidden">
+                        {novel.coverUrl ? (
+                          <img 
+                            src={`/api/novels/${novel.author}/${novel.title}/cover?t=${Date.now()}`}
+                            alt={novel.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              // 如果封面加载失败，显示默认图标
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <BookOpen className={`h-16 w-16 text-white ${novel.coverUrl ? 'hidden' : ''}`} />
+                      </div>
+                      <h3 className="text-xl font-serif font-semibold mb-2 text-gray-800 line-clamp-2">
+                        {novel.title}
+                      </h3>
+                      <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                        {novel.description}
+                      </p>
+                      <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                        <span className="flex items-center">
+                          <Eye className="h-4 w-4 mr-1" />
+                          {novel.views || 0}
+                        </span>
+                        <span className="flex items-center">
+                          <Clock className="h-4 w-4 mr-1" />
+                          {new Date(novel.updatedAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Link
+                          to={`/novel/${novel.author}/${novel.title}`}
+                          className="gradient-button w-full py-2 rounded-lg text-center block"
+                        >
+                          开始阅读
+                        </Link>
+                      </motion.div>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.section>
+            )}
+
+            {/* 最新更新 */}
+            {latestNovels.length > 0 && (
+              <motion.section
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-3xl font-serif font-bold gradient-text flex items-center">
+                    <Clock className="h-8 w-8 mr-3 text-green-500" />
+                    最新更新
+                  </h2>
+                  <Link
+                    to="/novels"
+                    className="text-cyan-600 hover:text-cyan-700 font-medium flex items-center"
+                  >
+                    查看更多
+                    <TrendingUp className="h-4 w-4 ml-1" />
+                  </Link>
+                </div>
+                <div className="grid grid-cols-1 gap-6">
+                  {latestNovels.map((novel, index) => (
+                    <motion.div
+                      key={novel.id}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.4, delay: index * 0.05 }}
+                      className="glass-effect rounded-xl p-4 card-hover novel-card"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className="flex-shrink-0 w-24 h-24 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center novel-cover">
+                          <BookOpen className="h-8 w-8 text-white" />
+                        </div>
+                        <div className="flex-grow">
+                          <h4 className="font-serif font-semibold text-gray-800 mb-1 line-clamp-1 novel-title">
+                            {novel.title}
+                          </h4>
+                          <p className="text-sm text-gray-600 line-clamp-2 novel-description">
+                            {novel.description}
+                          </p>
+                          <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
+                            <span>{novel.author}</span>
+                            <span>{new Date(novel.updatedAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.section>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Home;

@@ -1,0 +1,32 @@
+{
+  "title": "碧树凋",
+  "author": "StarFall-SYC",
+  "authorId": "user_1759589708173_ckfwwr4gg",
+  "description": "testtesttesttest",
+  "tags": [
+    "test"
+  ],
+  "status": "ongoing",
+  "createdAt": "2025-10-04T16:21:08.455Z",
+  "updatedAt": "2025-10-05T11:18:11.455Z",
+  "viewCount": 28,
+  "likeCount": 0,
+  "chapters": [
+    {
+      "id": "chapter_1759594868477_cpxh821ox",
+      "title": "砍相公",
+      "chapterNumber": 1,
+      "wordCount": 2299,
+      "createdAt": "2025-10-04T16:21:08.477Z",
+      "updatedAt": "2025-10-04T16:21:08.477Z"
+    },
+    {
+      "id": "chapter_1759594868504_9yclzhn05",
+      "title": "相公瓷",
+      "chapterNumber": 2,
+      "wordCount": 2373,
+      "createdAt": "2025-10-04T16:21:08.504Z",
+      "updatedAt": "2025-10-04T16:21:08.504Z"
+    }
+  ]
+}
