@@ -260,7 +260,7 @@ const Profile = () => {
         <div className="bg-gradient-to-br from-cyan-400 to-blue-500 h-32 flex items-center justify-center relative overflow-hidden">
           {novel.coverUrl ? (
             <img 
-              src={`/api/novels/${novel.author}/${novel.title}/cover?t=${Date.now()}`}
+              src={novel.coverUrl}
               alt={novel.title}
               className="w-full h-full object-cover"
               onError={(e) => {

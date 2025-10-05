@@ -57,7 +57,7 @@ const Home = () => {
       setLatestNovels(latest);
 
       // 精选推荐：取前6个热门小说，支持2行3列布局
-      setFeaturedNovels(popular.slice(0, 6));
+      setFeaturedNovels(popular.slice(0, 8));
     }
   }, [novels]);
 
@@ -221,19 +221,19 @@ const Home = () => {
                     精选推荐
                   </h2>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
                   {featuredNovels.map((novel, index) => (
-                    <motion.div
-                      key={novel.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.6, delay: index * 0.1 }}
-                      className="glass-effect rounded-2xl p-6 card-hover neon-border"
-                    >
+                    <Link key={novel.id} to={`/novel/${novel.author}/${novel.title}`}>
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: index * 0.1 }}
+                        className="glass-effect rounded-2xl p-6 card-hover neon-border cursor-pointer"
+                      >
                       <div className="aspect-[3/4] bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl mb-4 flex items-center justify-center relative overflow-hidden">
                         {novel.coverUrl ? (
                           <img 
-                            src={`/api/novels/${novel.author}/${novel.title}/cover?t=${Date.now()}`}
+                            src={novel.coverUrl}
                             alt={novel.title}
                             className="w-full h-full object-cover"
                             onError={(e) => {
@@ -261,19 +261,10 @@ const Home = () => {
                           {new Date(novel.updatedAt).toLocaleDateString()}
                         </span>
                       </div>
-                      <motion.div
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <Link
-                          to={`/novel/${novel.author}/${novel.title}`}
-                          className="gradient-button w-full py-2 rounded-lg text-center block"
-                        >
-                          开始阅读
-                        </Link>
-                      </motion.div>
+
                     </motion.div>
-                  ))}
+                      </Link>
+                    ))}
                 </div>
               </motion.section>
             )}

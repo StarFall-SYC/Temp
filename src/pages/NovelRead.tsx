@@ -49,6 +49,9 @@ const NovelRead = () => {
       if (foundNovel.chapters && foundNovel.chapters[chapterIdx]) {
         setCurrentChapter(foundNovel.chapters[chapterIdx]);
         setChapterIndex(chapterIdx);
+        
+        // 滚动到页面顶部
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         toast.error('章节不存在');
         navigate(`/novel/${username}/${title}`);
@@ -63,6 +66,9 @@ const NovelRead = () => {
     
     navigate(`/read/${username}/${title}/${index + 1}`);
     setShowChapterList(false);
+    
+    // 滚动到页面顶部
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const goToPrevChapter = () => {
