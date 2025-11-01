@@ -21,7 +21,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     maxReconnectAttempts = 5,
     onConnect,
     onDisconnect,
-    onError
+    onError,
   } = options;
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -80,15 +80,18 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
         console.log('WebSocket连接已关闭');
         isConnectedRef.current = false;
         onDisconnect?.();
-        
+
         // 尝试重连
         if (reconnectAttemptsRef.current < maxReconnectAttempts) {
           reconnectAttemptsRef.current++;
           console.log(`尝试重连 (${reconnectAttemptsRef.current}/${maxReconnectAttempts})`);
-          
-          reconnectTimeoutRef.current = setTimeout(() => {
-            connect();
-          }, Math.min(reconnectInterval * (1 + reconnectAttemptsRef.current), 15000));
+
+          reconnectTimeoutRef.current = setTimeout(
+            () => {
+              connect();
+            },
+            Math.min(reconnectInterval * (1 + reconnectAttemptsRef.current), 15000)
+          );
         } else {
           console.log('达到最大重连次数，停止重连');
         }
@@ -127,51 +130,59 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     return false;
   }, []);
 
-  const handleMessage = useCallback((message: WebSocketMessage) => {
-    console.log('收到WebSocket消息:', message);
+  const handleMessage = useCallback(
+    (message: WebSocketMessage) => {
+      console.log('收到WebSocket消息:', message);
 
-    switch (message.type) {
-      case 'connection':
-        console.log('WebSocket连接确认:', message.data);
-        break;
+      switch (message.type) {
+        case 'connection':
+          console.log('WebSocket连接确认:', message.data);
+          break;
 
-      case 'novel_created':
-      case 'novel_updated':
-        if (message.data && typeof message.data === 'object' && 'id' in message.data) {
-          updateNovelFromWebSocket(message.data as any);
-        }
-        break;
+        case 'novel_created':
+        case 'novel_updated':
+          if (message.data && typeof message.data === 'object' && 'id' in message.data) {
+            updateNovelFromWebSocket(message.data as any);
+          }
+          break;
 
-      case 'novel_deleted':
-        if (message.data && typeof message.data === 'object' && 'username' in message.data && 'title' in message.data) {
-          const { username, title } = message.data as { username: string; title: string };
-          removeNovelFromWebSocket(username, title);
-        }
-        break;
+        case 'novel_deleted':
+          if (
+            message.data &&
+            typeof message.data === 'object' &&
+            'username' in message.data &&
+            'title' in message.data
+          ) {
+            const { username, title } = message.data as { username: string; title: string };
+            removeNovelFromWebSocket(username, title);
+          }
+          break;
 
-      case 'cover_updated':
-        // 封面更新时，重新获取小说列表以更新封面URL
-        fetchNovels();
-        break;
-
-      case 'full_sync':
-        // 全量数据同步
-        if (Array.isArray(message.data)) {
-          // 这里可以直接更新整个小说列表
+        case 'cover_updated':
+          // 封面更新时，重新获取小说列表以更新封面URL
           fetchNovels();
-        }
-        break;
+          break;
 
-      default:
-        console.log('未处理的消息类型:', message.type);
-    }
-  }, [updateNovelFromWebSocket, removeNovelFromWebSocket, fetchNovels]);
+        case 'full_sync':
+          // 全量数据同步
+          if (Array.isArray(message.data)) {
+            // 这里可以直接更新整个小说列表
+            fetchNovels();
+          }
+          break;
+
+        default:
+          console.log('未处理的消息类型:', message.type);
+      }
+    },
+    [updateNovelFromWebSocket, removeNovelFromWebSocket, fetchNovels]
+  );
 
   const getConnectionStatus = useCallback(() => {
     return {
       isConnected: isConnectedRef.current,
       readyState: wsRef.current?.readyState,
-      reconnectAttempts: reconnectAttemptsRef.current
+      reconnectAttempts: reconnectAttemptsRef.current,
     };
   }, []);
 
@@ -188,7 +199,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     disconnect,
     sendMessage,
     getConnectionStatus,
-    isConnected: isConnectedRef.current
+    isConnected: isConnectedRef.current,
   };
 };
 

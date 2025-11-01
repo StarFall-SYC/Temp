@@ -5,7 +5,7 @@ import type { User } from '../../shared/types.js';
 import { getUserById } from './userStorage.js';
 
 // JWT密钥（在生产环境中应该从环境变量读取）
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || 'a-very-long-and-random-secret-key-for-development-only-change-me-in-production-1234567890';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 // 扩展Request接口以包含用户信息
@@ -44,14 +44,18 @@ export async function comparePassword(password: string, hashedPassword: string):
 }
 
 // 认证中间件
-export async function authenticateToken(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function authenticateToken(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
   if (!token) {
     res.status(401).json({
       success: false,
-      message: '访问令牌缺失'
+      message: '访问令牌缺失',
     });
     return;
   }
@@ -60,7 +64,7 @@ export async function authenticateToken(req: Request, res: Response, next: NextF
   if (!decoded) {
     res.status(403).json({
       success: false,
-      message: '无效的访问令牌'
+      message: '无效的访问令牌',
     });
     return;
   }
@@ -70,7 +74,7 @@ export async function authenticateToken(req: Request, res: Response, next: NextF
     if (!user) {
       res.status(403).json({
         success: false,
-        message: '用户不存在'
+        message: '用户不存在',
       });
       return;
     }
@@ -82,7 +86,7 @@ export async function authenticateToken(req: Request, res: Response, next: NextF
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: '服务器内部错误'
+      message: '服务器内部错误',
     });
   }
 }

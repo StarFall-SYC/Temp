@@ -13,14 +13,14 @@ const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    verificationCode: ''
+    verificationCode: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loginMethod, setLoginMethod] = useState<'password' | 'verification'>('password');
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [countdown, setCountdown] = useState(0);
-  
+
   const { login, setUser, user, error, clearError } = useAuthStore();
   const navigate = useNavigate();
 
@@ -64,7 +64,7 @@ const Login = () => {
     setIsSendingCode(true);
     try {
       const response = await axios.post('/api/auth/send-verification-code', {
-        email: formData.email
+        email: formData.email,
       });
 
       if (response.data.success) {
@@ -83,15 +83,15 @@ const Login = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (loginMethod === 'password') {
       if (!formData.email || !formData.password) {
         toast.error('请填写邮箱和密码');
@@ -105,7 +105,7 @@ const Login = () => {
     }
 
     setIsLoading(true);
-    
+
     try {
       if (loginMethod === 'password') {
         const success = await login(formData.email, formData.password);
@@ -117,9 +117,9 @@ const Login = () => {
         // 邮箱验证码登录
         const response = await axios.post('/api/auth/login-with-code', {
           email: formData.email,
-          verificationCode: formData.verificationCode
+          verificationCode: formData.verificationCode,
         });
-        
+
         if (response.data.success) {
           // 手动设置用户状态
           const { user, token } = response.data.data;
@@ -131,8 +131,8 @@ const Login = () => {
           return;
         }
       }
-    } catch (error: any) {
-      const message = error.response?.data?.message || '登录失败';
+    } catch (err: any) {
+      const message = err.response?.data?.message || '登录失败';
       toast.error(message);
     } finally {
       setIsLoading(false);
@@ -141,7 +141,7 @@ const Login = () => {
 
   return (
     <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+      <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 w-full max-w-xs sm:max-w-sm md:max-w-md">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-cyan-100 rounded-full mb-4">
             <LogIn className="h-8 w-8 text-cyan-600" />
@@ -235,11 +235,7 @@ const Login = () => {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5" />
-                    ) : (
-                      <Eye className="h-5 w-5" />
-                    )}
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
                 </div>
               </motion.div>
@@ -251,7 +247,10 @@ const Login = () => {
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <label htmlFor="verificationCode" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="verificationCode"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   邮箱验证码
                 </label>
                 <div className="flex space-x-2">
@@ -279,7 +278,7 @@ const Login = () => {
                     {isSendingCode ? (
                       <motion.div
                         animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                         className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
                       />
                     ) : countdown > 0 ? (
@@ -318,8 +317,8 @@ const Login = () => {
         <div className="mt-6 text-center">
           <p className="text-gray-600">
             还没有账户？{' '}
-            <Link 
-              to="/register" 
+            <Link
+              to="/register"
               className="text-cyan-600 hover:text-cyan-700 font-medium transition-colors"
             >
               立即注册

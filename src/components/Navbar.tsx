@@ -23,7 +23,7 @@ const Navbar = () => {
   };
 
   return (
-    <motion.nav 
+    <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       className="glass-effect sticky top-0 z-50 border-b border-white/20"
@@ -31,15 +31,12 @@ const Navbar = () => {
       <div className="container mx-auto px-4 navbar-mobile">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="flex items-center space-x-2 text-xl font-bold gradient-text hover:scale-105 transition-transform"
             onClick={closeMobileMenu}
           >
-            <motion.div
-              whileHover={{ rotate: 360 }}
-              transition={{ duration: 0.5 }}
-            >
+            <motion.div whileHover={{ rotate: 360 }} transition={{ duration: 0.5 }}>
               <BookOpen className="h-6 w-6" />
             </motion.div>
             <span className="font-serif navbar-brand">玉扶疏小说网</span>
@@ -47,32 +44,32 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6 navbar-links">
-            <Link 
-              to="/" 
+            <Link
+              to="/"
               className="relative text-gray-700 hover:text-cyan-600 transition-colors font-medium group navbar-link"
             >
               首页
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 group-hover:w-full transition-all duration-300"></span>
             </Link>
-            
+
             {user ? (
               <>
-                <Link 
-                  to="/profile" 
+                <Link
+                  to="/profile"
                   className="flex items-center space-x-1 text-gray-700 hover:text-cyan-600 transition-colors font-medium group"
                 >
                   <PenTool className="h-4 w-4 group-hover:animate-pulse" />
                   <span>创作中心</span>
                 </Link>
-                
-                <Link 
-                  to="/profile" 
+
+                <Link
+                  to="/profile"
                   className="flex items-center space-x-1 text-gray-700 hover:text-cyan-600 transition-colors font-medium"
                 >
                   <User className="h-4 w-4" />
                   <span>{user.username}</span>
                 </Link>
-                
+
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -85,18 +82,15 @@ const Navbar = () => {
               </>
             ) : (
               <>
-                <Link 
-                  to="/login" 
+                <Link
+                  to="/login"
                   className="text-gray-700 hover:text-cyan-600 transition-colors font-medium"
                 >
                   登录
                 </Link>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Link 
-                    to="/register" 
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Link
+                    to="/register"
                     className="gradient-button px-6 py-2 rounded-full font-medium shadow-lg"
                   >
                     注册
@@ -141,7 +135,7 @@ const Navbar = () => {
         {/* Mobile Navigation */}
         <AnimatePresence>
           {isMobileMenuOpen && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
@@ -153,15 +147,15 @@ const Navbar = () => {
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.1 }}
                 >
-                  <Link 
-                    to="/" 
+                  <Link
+                    to="/"
                     className="text-gray-700 hover:text-cyan-600 transition-colors font-medium py-2 block"
                     onClick={closeMobileMenu}
                   >
                     首页
                   </Link>
                 </motion.div>
-                
+
                 {user ? (
                   <>
                     <motion.div
@@ -169,8 +163,8 @@ const Navbar = () => {
                       animate={{ x: 0, opacity: 1 }}
                       transition={{ delay: 0.2 }}
                     >
-                      <Link 
-                        to="/profile" 
+                      <Link
+                        to="/profile"
                         className="flex items-center space-x-2 text-gray-700 hover:text-cyan-600 transition-colors font-medium py-2"
                         onClick={closeMobileMenu}
                       >
@@ -178,14 +172,14 @@ const Navbar = () => {
                         <span>创作中心</span>
                       </Link>
                     </motion.div>
-                    
+
                     <motion.div
                       initial={{ x: -20, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
                       transition={{ delay: 0.3 }}
                     >
-                      <Link 
-                        to="/profile" 
+                      <Link
+                        to="/profile"
                         className="flex items-center space-x-2 text-gray-700 hover:text-cyan-600 transition-colors font-medium py-2"
                         onClick={closeMobileMenu}
                       >
@@ -193,7 +187,7 @@ const Navbar = () => {
                         <span>{user.username}</span>
                       </Link>
                     </motion.div>
-                    
+
                     <motion.div
                       initial={{ x: -20, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
@@ -215,8 +209,8 @@ const Navbar = () => {
                       animate={{ x: 0, opacity: 1 }}
                       transition={{ delay: 0.2 }}
                     >
-                      <Link 
-                        to="/login" 
+                      <Link
+                        to="/login"
                         className="text-gray-700 hover:text-cyan-600 transition-colors font-medium py-2 block"
                         onClick={closeMobileMenu}
                       >
@@ -228,8 +222,8 @@ const Navbar = () => {
                       animate={{ x: 0, opacity: 1 }}
                       transition={{ delay: 0.3 }}
                     >
-                      <Link 
-                        to="/register" 
+                      <Link
+                        to="/register"
                         className="gradient-button px-4 py-2 rounded-full font-medium text-center block"
                         onClick={closeMobileMenu}
                       >

@@ -9,12 +9,16 @@ const __dirname = path.dirname(__filename);
 // 用户数据存储路径
 const USERS_DIR = path.join(__dirname, '../../users');
 
-function getUserDir(username: string): string {
+export function getUserDir(username: string): string {
   return path.join(USERS_DIR, username);
 }
 
 function getUserJsonPath(username: string): string {
   return path.join(getUserDir(username), 'user.json');
+}
+
+export function getAvatarPath(username: string): string {
+  return path.join(getUserDir(username), 'avatar.png'); // 假设头像统一保存为avatar.png
 }
 
 // 确保用户目录存在
@@ -54,13 +58,13 @@ export async function getAllUsers(): Promise<User[]> {
 // 根据ID查找用户
 export async function getUserById(id: string): Promise<User | null> {
   const users = await getAllUsers();
-  return users.find(user => user.id === id) || null;
+  return users.find((user) => user.id === id) || null;
 }
 
 // 根据邮箱查找用户
 export async function getUserByEmail(email: string): Promise<User | null> {
   const users = await getAllUsers();
-  return users.find(user => user.email === email) || null;
+  return users.find((user) => user.email === email) || null;
 }
 
 // 根据用户名查找用户
@@ -75,7 +79,9 @@ export async function getUserByUsername(username: string): Promise<User | null> 
 }
 
 // 创建新用户
-export async function createUser(userData: UserRegistration & { id: string; hashedPassword: string }): Promise<User> {
+export async function createUser(
+  userData: UserRegistration & { id: string; hashedPassword: string }
+): Promise<User> {
   await ensureUsersDirectory();
 
   const newUser: User = {
@@ -84,7 +90,8 @@ export async function createUser(userData: UserRegistration & { id: string; hash
     email: userData.email,
     password: userData.hashedPassword,
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    avatarUrl: userData.avatarUrl || undefined,
   };
 
   // 创建用户专属目录与文件
@@ -106,13 +113,14 @@ export async function createUser(userData: UserRegistration & { id: string; hash
 // 更新用户信息
 export async function updateUser(id: string, updates: Partial<User>): Promise<User | null> {
   const users = await getAllUsers();
-  const target = users.find(u => u.id === id);
+  const target = users.find((u) => u.id === id);
   if (!target) return null;
 
   const updated: User = {
     ...target,
     ...updates,
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    avatarUrl: updates.avatarUrl !== undefined ? updates.avatarUrl : target.avatarUrl,
   };
 
   const userJson = getUserJsonPath(updated.username);
@@ -123,7 +131,7 @@ export async function updateUser(id: string, updates: Partial<User>): Promise<Us
 // 删除用户
 export async function deleteUser(id: string): Promise<boolean> {
   const users = await getAllUsers();
-  const target = users.find(u => u.id === id);
+  const target = users.find((u) => u.id === id);
   if (!target) return false;
 
   // 删除用户目录

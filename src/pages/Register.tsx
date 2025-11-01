@@ -15,7 +15,7 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    verificationCode: ''
+    verificationCode: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -23,7 +23,7 @@ const Register = () => {
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [emailVerified, setEmailVerified] = useState(false);
-  
+
   const { register, user, error, clearError } = useAuthStore();
   const navigate = useNavigate();
 
@@ -53,9 +53,9 @@ const Register = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -75,7 +75,7 @@ const Register = () => {
     setIsSendingCode(true);
     try {
       const response = await axios.post('/auth/send-verification-code', {
-        email: formData.email
+        email: formData.email,
       });
 
       if (response.data.success) {
@@ -93,7 +93,13 @@ const Register = () => {
   };
 
   const validateForm = () => {
-    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword || !formData.verificationCode) {
+    if (
+      !formData.username ||
+      !formData.email ||
+      !formData.password ||
+      !formData.confirmPassword ||
+      !formData.verificationCode
+    ) {
       toast.error('请填写所有字段');
       return false;
     }
@@ -124,7 +130,7 @@ const Register = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -135,9 +141,9 @@ const Register = () => {
         username: formData.username,
         email: formData.email,
         password: formData.password,
-        verificationCode: formData.verificationCode
+        verificationCode: formData.verificationCode,
       });
-      
+
       toast.success('注册成功！');
       navigate('/');
     } catch (error) {
@@ -152,7 +158,7 @@ const Register = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full space-y-8"
+        className="max-w-xs sm:max-w-sm md:max-w-md w-full space-y-8"
       >
         <div className="text-center">
           <motion.div
@@ -163,7 +169,7 @@ const Register = () => {
           >
             <UserPlus className="h-8 w-8 text-white" />
           </motion.div>
-          <h2 className="text-3xl font-serif font-bold gradient-text">创建账户</h2>
+          <h2 className="text-2xl sm:text-3xl font-serif font-bold gradient-text">创建账户</h2>
           <p className="mt-2 text-gray-600">加入我们，开始您的创作之旅</p>
         </div>
 
@@ -171,7 +177,7 @@ const Register = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="glass-effect rounded-2xl p-8 space-y-6 neon-border"
+          className="glass-effect rounded-2xl p-4 sm:p-6 md:p-8 space-y-6 neon-border"
           onSubmit={handleSubmit}
         >
           {/* 用户名 */}
@@ -217,7 +223,10 @@ const Register = () => {
 
           {/* 邮箱验证码 */}
           <div>
-            <label htmlFor="verificationCode" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="verificationCode"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               邮箱验证码
             </label>
             <div className="flex space-x-2">
@@ -245,7 +254,7 @@ const Register = () => {
                 {isSendingCode ? (
                   <motion.div
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                     className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
                   />
                 ) : countdown > 0 ? (
@@ -293,7 +302,10 @@ const Register = () => {
 
           {/* 确认密码 */}
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               确认密码
             </label>
             <div className="relative">
@@ -330,7 +342,7 @@ const Register = () => {
               <div className="flex items-center justify-center space-x-2">
                 <motion.div
                   animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                   className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
                 />
                 <span>创建中...</span>

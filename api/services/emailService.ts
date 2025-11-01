@@ -15,17 +15,17 @@ export async function sendVerificationCode(email: string): Promise<boolean> {
   try {
     // 生成6位数字验证码
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    
+
     // 设置验证码过期时间（5分钟）
     const expires = Date.now() + 5 * 60 * 1000;
-    
+
     // 存储验证码
     verificationCodes.set(email, { code, expires });
-    
+
     // 在实际项目中，这里应该调用邮件服务API发送邮件
     // 目前为了演示，我们只在控制台输出验证码
     console.log(`验证码已发送到 ${email}: ${code}`);
-    
+
     return true;
   } catch (error) {
     console.error('发送验证码失败:', error);
@@ -41,23 +41,23 @@ export async function sendVerificationCode(email: string): Promise<boolean> {
  */
 export function verifyCode(email: string, code: string): boolean {
   const stored = verificationCodes.get(email);
-  
+
   if (!stored) {
     return false;
   }
-  
+
   // 检查验证码是否过期
   if (Date.now() > stored.expires) {
     verificationCodes.delete(email);
     return false;
   }
-  
+
   // 验证码匹配
   if (stored.code === code) {
     verificationCodes.delete(email);
     return true;
   }
-  
+
   return false;
 }
 

@@ -8,6 +8,7 @@ export interface User {
   password?: string; // 在返回给前端时会被删除
   createdAt: string;
   updatedAt: string;
+  avatarUrl?: string;
 }
 
 export interface UserRegistration {
@@ -24,10 +25,12 @@ export interface UserLogin {
 export interface AuthResponse {
   success: boolean;
   message: string;
-  data?: {
-    user: Omit<User, 'password'>;
-    token: string;
-  } | Omit<User, 'password'>;
+  data?:
+    | {
+        user: Omit<User, 'password'>;
+        token: string;
+      }
+    | Omit<User, 'password'>;
 }
 
 // 小说相关类型

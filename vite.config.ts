@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tsconfigPaths from "vite-tsconfig-paths";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tsconfigPaths from 'vite-tsconfig-paths';
 import { traeBadgePlugin } from 'vite-plugin-trae-solo-badge';
 
 // https://vite.dev/config/
@@ -8,9 +8,7 @@ export default defineConfig({
   plugins: [
     react({
       babel: {
-        plugins: [
-          'react-dev-locator',
-        ],
+        plugins: ['react-dev-locator'],
       },
     }),
     traeBadgePlugin({
@@ -20,8 +18,8 @@ export default defineConfig({
       clickable: true,
       clickUrl: 'https://www.trae.ai/solo?showJoin=1',
       autoTheme: true,
-      autoThemeTarget: '#root'
-    }), 
+      autoThemeTarget: '#root',
+    }),
     tsconfigPaths(),
   ],
   server: {
@@ -41,7 +39,7 @@ export default defineConfig({
             console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
           });
         },
-      }
-    }
-  }
-})
+      },
+    },
+  },
+});

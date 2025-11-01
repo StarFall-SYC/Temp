@@ -36,7 +36,11 @@ export function getNovelMetadataPath(username: string, novelTitle: string): stri
 }
 
 // 获取章节文件路径
-export function getChapterPath(username: string, novelTitle: string, chapterNumber: number): string {
+export function getChapterPath(
+  username: string,
+  novelTitle: string,
+  chapterNumber: number
+): string {
   return path.join(getNovelPath(username, novelTitle), `chapter_${chapterNumber}.json`);
 }
 
@@ -56,12 +60,15 @@ export async function ensureNovelDirectory(username: string, novelTitle: string)
 }
 
 // 创建新小说
-export async function createNovel(authorId: string, novelData: {
-  title: string;
-  description: string;
-  tags: string[];
-  status: 'ongoing' | 'completed' | 'paused';
-}): Promise<Novel> {
+export async function createNovel(
+  authorId: string,
+  novelData: {
+    title: string;
+    description: string;
+    tags: string[];
+    status: 'ongoing' | 'completed' | 'paused';
+  }
+): Promise<Novel> {
   // 获取作者信息
   const author = await getUserById(authorId);
   if (!author) {
@@ -85,7 +92,7 @@ export async function createNovel(authorId: string, novelData: {
     viewCount: 0,
     likeCount: 0,
     views: 0,
-    chapterCount: 0
+    chapterCount: 0,
   };
 
   // 创建小说目录
@@ -103,7 +110,7 @@ export async function createNovel(authorId: string, novelData: {
     updatedAt: novel.updatedAt,
     viewCount: novel.viewCount,
     likeCount: novel.likeCount,
-    chapters: []
+    chapters: [],
   };
 
   const metadataPath = getNovelMetadataPath(author.username, novelData.title);
@@ -133,7 +140,7 @@ export async function getNovel(username: string, novelTitle: string): Promise<No
       viewCount: metadata.viewCount,
       likeCount: metadata.likeCount,
       views: metadata.viewCount,
-      chapterCount: metadata.chapters.length
+      chapterCount: metadata.chapters.length,
     };
 
     // 加载章节信息
@@ -142,7 +149,7 @@ export async function getNovel(username: string, novelTitle: string): Promise<No
       try {
         const chapterContent = await fs.readFile(chapterPath, 'utf-8');
         const chapterData = JSON.parse(chapterContent);
-        
+
         const chapter: Chapter = {
           id: chapterMeta.id,
           novelId: novel.id,
@@ -151,9 +158,9 @@ export async function getNovel(username: string, novelTitle: string): Promise<No
           chapterNumber: chapterMeta.chapterNumber,
           wordCount: chapterMeta.wordCount,
           createdAt: chapterMeta.createdAt,
-          updatedAt: chapterMeta.updatedAt
+          updatedAt: chapterMeta.updatedAt,
         };
-        
+
         novel.chapters.push(chapter);
       } catch (error) {
         console.error(`加载章节失败: ${chapterPath}`, error);
@@ -161,7 +168,7 @@ export async function getNovel(username: string, novelTitle: string): Promise<No
     }
 
     return novel;
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }
@@ -171,9 +178,9 @@ export async function getUserNovels(username: string): Promise<Novel[]> {
   try {
     const novelsDir = getUserNovelsPath(username);
     const novelDirs = await fs.readdir(novelsDir, { withFileTypes: true });
-    
+
     const novels: Novel[] = [];
-    
+
     for (const dirent of novelDirs) {
       if (dirent.isDirectory()) {
         const novel = await getNovel(username, dirent.name);
@@ -182,9 +189,9 @@ export async function getUserNovels(username: string): Promise<Novel[]> {
         }
       }
     }
-    
+
     return novels;
-  } catch (error) {
+  } catch (_error) {
     return [];
   }
 }
@@ -194,25 +201,29 @@ export async function getAllNovels(): Promise<Novel[]> {
   try {
     const userDirs = await fs.readdir(USERS_DIR, { withFileTypes: true });
     const allNovels: Novel[] = [];
-    
+
     for (const userDir of userDirs) {
       if (userDir.isDirectory() && userDir.name !== 'users.json') {
         const userNovels = await getUserNovels(userDir.name);
         allNovels.push(...userNovels);
       }
     }
-    
+
     return allNovels;
-  } catch (error) {
+  } catch (_error) {
     return [];
   }
 }
 
 // 添加章节
-export async function addChapter(username: string, novelTitle: string, chapterData: {
-  title: string;
-  content: string;
-}): Promise<Chapter> {
+export async function addChapter(
+  username: string,
+  novelTitle: string,
+  chapterData: {
+    title: string;
+    content: string;
+  }
+): Promise<Chapter> {
   const novel = await getNovel(username, novelTitle);
   if (!novel) {
     throw new Error('小说不存在');
@@ -231,64 +242,75 @@ export async function addChapter(username: string, novelTitle: string, chapterDa
     chapterNumber,
     wordCount,
     createdAt: now.toISOString(),
-    updatedAt: now.toISOString()
+    updatedAt: now.toISOString(),
   };
 
   // 保存章节文件
   const chapterPath = getChapterPath(username, novelTitle, chapterNumber);
-  await fs.writeFile(chapterPath, JSON.stringify({
-    id: chapterId,
-    title: chapterData.title,
-    content: chapterData.content,
-    chapterNumber,
-    wordCount,
-    createdAt: now.toISOString(),
-    updatedAt: now.toISOString()
-  }, null, 2));
+  await fs.writeFile(
+    chapterPath,
+    JSON.stringify(
+      {
+        id: chapterId,
+        title: chapterData.title,
+        content: chapterData.content,
+        chapterNumber,
+        wordCount,
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+      },
+      null,
+      2
+    )
+  );
 
   // 更新元数据
   const metadataPath = getNovelMetadataPath(username, novelTitle);
   const metadataContent = await fs.readFile(metadataPath, 'utf-8');
   const metadata: NovelMetadata = JSON.parse(metadataContent);
-  
+
   const chapterMeta: ChapterMetadata = {
     id: chapterId,
     title: chapterData.title,
     chapterNumber,
     wordCount,
     createdAt: now.toISOString(),
-    updatedAt: now.toISOString()
+    updatedAt: now.toISOString(),
   };
-  
+
   metadata.chapters.push(chapterMeta);
   metadata.updatedAt = now.toISOString();
-  
+
   await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
 
   return chapter;
 }
 
 // 更新小说信息
-export async function updateNovel(username: string, novelTitle: string, updates: {
-  description?: string;
-  tags?: string[];
-  status?: 'ongoing' | 'completed' | 'paused';
-}): Promise<Novel | null> {
+export async function updateNovel(
+  username: string,
+  novelTitle: string,
+  updates: {
+    description?: string;
+    tags?: string[];
+    status?: 'ongoing' | 'completed' | 'paused';
+  }
+): Promise<Novel | null> {
   try {
     const metadataPath = getNovelMetadataPath(username, novelTitle);
     const metadataContent = await fs.readFile(metadataPath, 'utf-8');
     const metadata: NovelMetadata = JSON.parse(metadataContent);
-    
+
     // 更新元数据
     if (updates.description !== undefined) metadata.description = updates.description;
     if (updates.tags !== undefined) metadata.tags = updates.tags;
     if (updates.status !== undefined) metadata.status = updates.status;
     metadata.updatedAt = new Date().toISOString();
-    
+
     await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
-    
+
     return await getNovel(username, novelTitle);
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 }
@@ -299,7 +321,7 @@ export async function deleteNovel(username: string, novelTitle: string): Promise
     const novelPath = getNovelPath(username, novelTitle);
     await fs.rmdir(novelPath, { recursive: true });
     return true;
-  } catch (error) {
+  } catch (_error) {
     return false;
   }
 }
@@ -310,10 +332,10 @@ export async function incrementViewCount(username: string, novelTitle: string): 
     const metadataPath = getNovelMetadataPath(username, novelTitle);
     const metadataContent = await fs.readFile(metadataPath, 'utf-8');
     const metadata: NovelMetadata = JSON.parse(metadataContent);
-    
+
     metadata.viewCount += 1;
     metadata.updatedAt = new Date().toISOString();
-    
+
     await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
   } catch (error) {
     console.error('增加浏览量失败:', error);

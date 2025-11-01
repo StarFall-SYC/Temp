@@ -24,28 +24,28 @@ class FileMonitorService {
    */
   initWebSocket(port: number = 8081): void {
     this.wss = new WebSocketServer({ port });
-    
+
     this.wss.on('connection', (ws: WebSocket) => {
       console.log('WebSocket客户端连接');
       this.clients.add(ws);
-      
+
       // 发送连接确认消息
       this.sendToClient(ws, {
         type: 'connection',
-        data: { message: '连接成功' }
+        data: { message: '连接成功' },
       });
-      
+
       ws.on('close', () => {
         console.log('WebSocket客户端断开连接');
         this.clients.delete(ws);
       });
-      
+
       ws.on('error', (error) => {
         console.error('WebSocket错误:', error);
         this.clients.delete(ws);
       });
     });
-    
+
     console.log(`WebSocket服务器启动在端口 ${port}`);
   }
 
@@ -55,13 +55,13 @@ class FileMonitorService {
   startMonitoring(): void {
     // 确保users目录存在
     this.ensureUsersDirectory();
-    
+
     // 监控users目录下的所有文件
     this.watcher = chokidar.watch(this.usersPath, {
       ignored: /(^|[\/\\])\../, // 忽略隐藏文件
       persistent: true,
       ignoreInitial: true, // 忽略初始扫描
-      depth: 10 // 监控深度
+      depth: 10, // 监控深度
     });
 
     // 监听文件变化事件
@@ -85,7 +85,7 @@ class FileMonitorService {
       this.watcher = null;
       console.log('文件监控服务已停止');
     }
-    
+
     if (this.wss) {
       this.wss.close();
       this.wss = null;
@@ -100,15 +100,15 @@ class FileMonitorService {
     try {
       const relativePath = path.relative(this.usersPath, filePath);
       const pathParts = relativePath.split(path.sep);
-      
+
       // 检查是否是小说相关文件
       if (pathParts.length >= 4 && pathParts[1] === 'articles') {
         const username = pathParts[0];
         const novelTitle = pathParts[2];
         const fileName = pathParts[pathParts.length - 1];
-        
+
         console.log(`文件${event}: ${relativePath}`);
-        
+
         if (fileName === 'chapter.json') {
           await this.handleNovelChange(event, username, novelTitle);
         } else if (fileName === 'cover.png') {
@@ -127,14 +127,14 @@ class FileMonitorService {
     try {
       const relativePath = path.relative(this.usersPath, dirPath);
       const pathParts = relativePath.split(path.sep);
-      
+
       // 检查是否是小说目录
       if (pathParts.length === 3 && pathParts[1] === 'articles') {
         const username = pathParts[0];
         const novelTitle = pathParts[2];
-        
+
         console.log(`目录${event}: ${relativePath}`);
-        
+
         if (event === 'addDir') {
           // 新建小说目录
           await this.handleNovelCreated(username, novelTitle);
@@ -151,13 +151,17 @@ class FileMonitorService {
   /**
    * 处理小说内容变化
    */
-  private async handleNovelChange(event: string, username: string, novelTitle: string): Promise<void> {
+  private async handleNovelChange(
+    event: string,
+    username: string,
+    novelTitle: string
+  ): Promise<void> {
     try {
       if (event === 'unlink') {
         // 小说被删除
         this.broadcastMessage({
           type: 'novel_deleted',
-          data: { username, title: novelTitle }
+          data: { username, title: novelTitle },
         });
       } else {
         // 小说被创建或更新
@@ -165,7 +169,7 @@ class FileMonitorService {
         if (novel) {
           this.broadcastMessage({
             type: event === 'add' ? 'novel_created' : 'novel_updated',
-            data: novel
+            data: novel,
           });
         }
       }
@@ -177,15 +181,19 @@ class FileMonitorService {
   /**
    * 处理封面变化
    */
-  private async handleCoverChange(event: string, username: string, novelTitle: string): Promise<void> {
+  private async handleCoverChange(
+    event: string,
+    username: string,
+    novelTitle: string
+  ): Promise<void> {
     try {
       this.broadcastMessage({
         type: 'cover_updated',
-        data: { 
-          username, 
+        data: {
+          username,
           title: novelTitle,
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       });
     } catch (error) {
       console.error('处理封面变化失败:', error);
@@ -203,7 +211,7 @@ class FileMonitorService {
         if (novel) {
           this.broadcastMessage({
             type: 'novel_created',
-            data: novel
+            data: novel,
           });
         }
       } catch (error) {
@@ -218,7 +226,7 @@ class FileMonitorService {
   private async handleNovelDeleted(username: string, novelTitle: string): Promise<void> {
     this.broadcastMessage({
       type: 'novel_deleted',
-      data: { username, title: novelTitle }
+      data: { username, title: novelTitle },
     });
   }
 
@@ -227,7 +235,7 @@ class FileMonitorService {
    */
   private broadcastMessage(message: WebSocketMessage): void {
     const messageStr = JSON.stringify(message);
-    
+
     this.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(messageStr);
@@ -236,7 +244,7 @@ class FileMonitorService {
         this.clients.delete(client);
       }
     });
-    
+
     console.log(`广播消息: ${message.type}`, message.data);
   }
 
@@ -276,7 +284,7 @@ class FileMonitorService {
       const novels = await getAllNovels();
       this.broadcastMessage({
         type: 'full_sync',
-        data: novels
+        data: novels,
       });
     } catch (error) {
       console.error('全量数据同步失败:', error);

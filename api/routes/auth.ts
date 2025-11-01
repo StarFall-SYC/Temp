@@ -3,35 +3,58 @@
  * 处理用户注册、登录、token管理等
  */
 import { Router, type Request, type Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import type { UserRegistration, UserLogin, AuthResponse } from '../../shared/types.js';
-import {
-  createUser,
-  getUserByEmail,
-  getUserByUsername
-} from '../utils/userStorage.js';
+import { createUser, getUserByEmail, getUserByUsername } from '../utils/userStorage.js';
 import {
   hashPassword,
   comparePassword,
   generateToken,
   generateUserId,
-  authenticateToken
+  authenticateToken,
 } from '../utils/auth.js';
 import { sendVerificationCode, verifyCode } from '../services/emailService.js';
+import { upload, saveAvatarImage, getAvatarImage } from '../utils/fileUpload.js';
+import { updateUser } from '../utils/userStorage.js';
 
 const router = Router();
+
+// 认证相关路由的速率限制：每 15 分钟最多 100 次请求
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: {
+    success: false,
+    message: '请求过多，请在 15 分钟后重试',
+  },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
+// 登录和注册的更严格速率限制：每 5 分钟最多 5 次请求
+const loginLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 5, // Limit each IP to 5 requests per windowMs
+  message: {
+    success: false,
+    message: '登录或注册尝试过多，请在 5 分钟后重试',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 /**
  * 发送邮箱验证码
  * POST /api/auth/send-verification-code
  */
-router.post('/send-verification-code', async (req: Request, res: Response): Promise<void> => {
+router.post('/send-verification-code', authLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
     const { email } = req.body;
 
     if (!email) {
       res.status(400).json({
         success: false,
-        message: '邮箱地址是必填项'
+        message: '邮箱地址是必填项',
       });
       return;
     }
@@ -41,31 +64,30 @@ router.post('/send-verification-code', async (req: Request, res: Response): Prom
     if (existingUser) {
       res.status(409).json({
         success: false,
-        message: '该邮箱已被注册'
+        message: '该邮箱已被注册',
       });
       return;
     }
 
     // 发送验证码
     const result = await sendVerificationCode(email);
-    
+
     if (result.success) {
       res.status(200).json({
         success: true,
-        message: result.message
+        message: result.message,
       });
     } else {
       res.status(400).json({
         success: false,
-        message: result.message
+        message: result.message,
       });
     }
-
   } catch (error) {
     console.error('发送验证码错误:', error);
     res.status(500).json({
       success: false,
-      message: '服务器内部错误'
+      message: '服务器内部错误',
     });
   }
 });
@@ -74,38 +96,37 @@ router.post('/send-verification-code', async (req: Request, res: Response): Prom
  * 验证邮箱验证码
  * POST /api/auth/verify-code
  */
-router.post('/verify-code', async (req: Request, res: Response): Promise<void> => {
+router.post('/verify-code', authLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, code } = req.body;
 
     if (!email || !code) {
       res.status(400).json({
         success: false,
-        message: '邮箱和验证码都是必填项'
+        message: '邮箱和验证码都是必填项',
       });
       return;
     }
 
     // 验证验证码
     const result = verifyCode(email, code);
-    
+
     if (result.success) {
       res.status(200).json({
         success: true,
-        message: result.message
+        message: result.message,
       });
     } else {
       res.status(400).json({
         success: false,
-        message: result.message
+        message: result.message,
       });
     }
-
   } catch (error) {
     console.error('验证验证码错误:', error);
     res.status(500).json({
       success: false,
-      message: '服务器内部错误'
+      message: '服务器内部错误',
     });
   }
 });
@@ -114,15 +135,20 @@ router.post('/verify-code', async (req: Request, res: Response): Promise<void> =
  * 用户注册
  * POST /api/auth/register
  */
-router.post('/register', async (req: Request, res: Response): Promise<void> => {
+router.post('/register', loginLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { username, email, password, verificationCode }: UserRegistration & { verificationCode: string } = req.body;
+    const {
+      username,
+      email,
+      password,
+      verificationCode,
+    }: UserRegistration & { verificationCode: string } = req.body;
 
     // 验证输入
     if (!username || !email || !password || !verificationCode) {
       res.status(400).json({
         success: false,
-        message: '用户名、邮箱、密码和验证码都是必填项'
+        message: '用户名、邮箱、密码和验证码都是必填项',
       } as AuthResponse);
       return;
     }
@@ -131,7 +157,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     if (username.length < 3 || username.length > 20) {
       res.status(400).json({
         success: false,
-        message: '用户名长度必须在3-20个字符之间'
+        message: '用户名长度必须在3-20个字符之间',
       } as AuthResponse);
       return;
     }
@@ -140,7 +166,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     if (password.length < 6) {
       res.status(400).json({
         success: false,
-        message: '密码长度至少6个字符'
+        message: '密码长度至少6个字符',
       } as AuthResponse);
       return;
     }
@@ -150,7 +176,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     if (!emailRegex.test(email)) {
       res.status(400).json({
         success: false,
-        message: '邮箱格式不正确'
+        message: '邮箱格式不正确',
       } as AuthResponse);
       return;
     }
@@ -160,7 +186,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     if (!codeVerification.success) {
       res.status(400).json({
         success: false,
-        message: codeVerification.message
+        message: codeVerification.message,
       } as AuthResponse);
       return;
     }
@@ -170,7 +196,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     if (existingUserByUsername) {
       res.status(409).json({
         success: false,
-        message: '用户名已存在'
+        message: '用户名已存在',
       } as AuthResponse);
       return;
     }
@@ -180,7 +206,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     if (existingUserByEmail) {
       res.status(409).json({
         success: false,
-        message: '邮箱已被注册'
+        message: '邮箱已被注册',
       } as AuthResponse);
       return;
     }
@@ -195,7 +221,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       username,
       email,
       password,
-      hashedPassword
+      hashedPassword,
     });
 
     // 生成token
@@ -209,17 +235,16 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       message: '注册成功',
       data: {
         user: userWithoutPassword,
-        token
-      }
+        token,
+      },
     });
-
   } catch (error) {
     console.error('注册错误:', error);
     res.status(500).json({
-       success: false,
-       message: '服务器内部错误',
-       error: process.env.NODE_ENV === 'development' ? error.message : undefined
-     } as AuthResponse);
+      success: false,
+      message: '服务器内部错误',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    } as AuthResponse);
   }
 });
 
@@ -227,7 +252,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
  * 用户登录
  * POST /api/auth/login
  */
-router.post('/login', async (req: Request, res: Response): Promise<void> => {
+router.post('/login', loginLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password }: UserLogin = req.body;
 
@@ -235,7 +260,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     if (!email || !password) {
       res.status(400).json({
         success: false,
-        message: '邮箱和密码都是必填项'
+        message: '邮箱和密码都是必填项',
       } as AuthResponse);
       return;
     }
@@ -245,7 +270,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     if (!user) {
       res.status(401).json({
         success: false,
-        message: '邮箱或密码错误'
+        message: '邮箱或密码错误',
       } as AuthResponse);
       return;
     }
@@ -255,7 +280,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     if (!isPasswordValid) {
       res.status(401).json({
         success: false,
-        message: '邮箱或密码错误'
+        message: '邮箱或密码错误',
       } as AuthResponse);
       return;
     }
@@ -271,17 +296,16 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       message: '登录成功',
       data: {
         user: userWithoutPassword,
-        token
-      }
+        token,
+      },
     });
-
   } catch (error) {
     console.error('登录错误:', error);
     res.status(500).json({
-       success: false,
-       message: '服务器内部错误',
-       error: process.env.NODE_ENV === 'development' ? error.message : undefined
-     } as AuthResponse);
+      success: false,
+      message: '服务器内部错误',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+    } as AuthResponse);
   }
 });
 
@@ -294,7 +318,7 @@ router.post('/logout', async (req: Request, res: Response): Promise<void> => {
   // 这里只是返回成功响应
   res.status(200).json({
     success: true,
-    message: '登出成功'
+    message: '登出成功',
   } as AuthResponse);
 });
 
@@ -306,7 +330,7 @@ router.get('/me', authenticateToken, async (req: Request, res: Response): Promis
   res.status(200).json({
     success: true,
     message: '获取用户信息成功',
-    data: req.user
+    data: req.user,
   });
 });
 
@@ -318,8 +342,87 @@ router.post('/verify', authenticateToken, async (req: Request, res: Response): P
   res.status(200).json({
     success: true,
     message: 'Token有效',
-    data: req.user
+    data: req.user,
   });
+});
+
+/**
+ * 上传用户头像
+ * POST /api/auth/avatar
+ */
+router.post(
+  '/avatar',
+  authenticateToken,
+  upload.single('avatar'),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      if (!req.file) {
+        res.status(400).json({
+          success: false,
+          message: '请选择要上传的图片文件',
+        } as AuthResponse);
+        return;
+      }
+
+      const userId = req.user!.id;
+      const username = req.user!.username;
+      const avatarUrl = await saveAvatarImage(username, req.file.buffer);
+
+      // 更新用户头像URL
+      const updatedUser = await updateUser(userId, { avatarUrl });
+
+      if (!updatedUser) {
+        res.status(404).json({
+          success: false,
+          message: '用户不存在或更新失败',
+        } as AuthResponse);
+        return;
+      }
+
+      const { password: _, ...userWithoutPassword } = updatedUser;
+
+      res.status(200).json({
+        success: true,
+        message: '头像上传成功',
+        data: { user: userWithoutPassword, token: generateToken(userId) },
+      } as AuthResponse);
+    } catch (error) {
+      console.error('上传头像失败:', error);
+      res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : '服务器内部错误',
+      } as AuthResponse);
+    }
+  }
+);
+
+/**
+ * 获取用户头像
+ * GET /api/auth/avatar/:username
+ */
+router.get('/avatar/:username', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { username } = req.params;
+    const imageBuffer = await getAvatarImage(username);
+
+    if (!imageBuffer) {
+      res.status(404).json({
+        success: false,
+        message: '头像图片不存在',
+      } as AuthResponse);
+      return;
+    }
+
+    res.setHeader('Content-Type', 'image/png'); // 假设头像都是png格式
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // 缓存1天
+    res.send(imageBuffer);
+  } catch (error) {
+    console.error('获取头像失败:', error);
+    res.status(500).json({
+      success: false,
+      message: '服务器内部错误',
+    } as AuthResponse);
+  }
 });
 
 export default router;
@@ -334,7 +437,7 @@ router.post('/login-with-code', async (req: Request, res: Response): Promise<voi
     if (!email || !verificationCode) {
       res.status(400).json({
         success: false,
-        message: '邮箱和验证码都是必填项'
+        message: '邮箱和验证码都是必填项',
       });
       return;
     }
@@ -344,7 +447,7 @@ router.post('/login-with-code', async (req: Request, res: Response): Promise<voi
     if (!verificationResult.success) {
       res.status(400).json({
         success: false,
-        message: verificationResult.message
+        message: verificationResult.message,
       });
       return;
     }
@@ -354,7 +457,7 @@ router.post('/login-with-code', async (req: Request, res: Response): Promise<voi
     if (!user) {
       res.status(404).json({
         success: false,
-        message: '用户不存在，请先注册'
+        message: '用户不存在，请先注册',
       });
       return;
     }
@@ -372,10 +475,10 @@ router.post('/login-with-code', async (req: Request, res: Response): Promise<voi
           username: user.username,
           email: user.email,
           createdAt: user.createdAt,
-          updatedAt: user.updatedAt
+          updatedAt: user.updatedAt,
         },
-        token
-      }
+        token,
+      },
     };
 
     res.json(response);
@@ -383,8 +486,7 @@ router.post('/login-with-code', async (req: Request, res: Response): Promise<voi
     console.error('邮箱验证码登录失败:', error);
     res.status(500).json({
       success: false,
-      message: '服务器内部错误'
+      message: '服务器内部错误',
     });
   }
 });
-

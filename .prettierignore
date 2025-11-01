@@ -1,0 +1,14 @@
+node_modules
+dist
+build
+.git
+.env
+.env.local
+.env.*.local
+*.log
+*.lock
+.DS_Store
+.vscode
+.idea
+users
+
