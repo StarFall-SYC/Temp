@@ -80,7 +80,7 @@ export async function getUserByUsername(username: string): Promise<User | null> 
 
 // 创建新用户
 export async function createUser(
-  userData: UserRegistration & { id: string; hashedPassword: string }
+  userData: UserRegistration & { id: string; hashedPassword: string; avatarUrl?: string }
 ): Promise<User> {
   await ensureUsersDirectory();
 

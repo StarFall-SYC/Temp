@@ -63,6 +63,9 @@ const NovelRead = () => {
     fetchNovelDetail(username, title);
   }, [username, title, fetchNovelDetail, navigate]);
 
+  // 防止重复滚动到顶部
+  const hasScrolledRef = useRef(false);
+
   useEffect(() => {
     const foundNovel = novels.find((n) => n.author === username && n.title === title);
     if (foundNovel) {
@@ -71,7 +74,11 @@ const NovelRead = () => {
       if (foundNovel.chapters && foundNovel.chapters[chapterIdx]) {
         setCurrentChapter(foundNovel.chapters[chapterIdx]);
         setChapterIndex(chapterIdx);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // 仅在首次加载时滚动到顶部
+        if (!hasScrolledRef.current) {
+          window.scrollTo({ top: 0, behavior: 'auto' });
+          hasScrolledRef.current = true;
+        }
         startReading(); // 开始阅读计时
       } else {
         toast.error('章节不存在');
@@ -80,6 +87,11 @@ const NovelRead = () => {
     }
     return () => stopReading(); // 离开页面时停止计时
   }, [novels, username, title, chapterNum, navigate, startReading, stopReading]);
+
+  // 重置滚动标志当章节改变时
+  useEffect(() => {
+    hasScrolledRef.current = false;
+  }, [chapterNum]);
 
   // 监听滚动进度并记录字数
   useEffect(() => {
@@ -123,9 +135,9 @@ const NovelRead = () => {
     if (!novel || !novel.chapters || index < 0 || index >= novel.chapters.length) {
       return;
     }
+    hasScrolledRef.current = false; // 重置滚动标志
     navigate(`/read/${username}/${title}/${index + 1}`);
     setShowChapterList(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const goToPrevChapter = () => {

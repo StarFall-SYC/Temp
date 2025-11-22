@@ -1,7 +1,7 @@
 // api/utils/sanitizer.ts
 import sanitizeHtml from 'sanitize-html';
 
-const defaultOptions = {
+const defaultOptions: any = {
   // 允许的标签，用户输入中只保留这些标签
   allowedTags: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'blockquote'],
   // 允许的属性，仅保留 a 标签的 href 属性
@@ -49,3 +49,4 @@ export function sanitizePath(pathPart: string): string {
 export function sanitizeText(text: string): string {
     return sanitizeHtml(text, { allowedTags: [], allowedAttributes: {} });
 }
+

@@ -81,7 +81,7 @@ const ReadingSettingsPanel: React.FC<ReadingSettingsPanelProps> = ({ isOpen, onC
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className={`rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden relative ${themeClasses.contentBg}`}
+        className={`rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden relative ${themeClasses.contentBg}`}
       >
         {/* Header */}
         <div className={`p-6 border-b ${themeClasses.borderColor}`}>
@@ -96,7 +96,7 @@ const ReadingSettingsPanel: React.FC<ReadingSettingsPanelProps> = ({ isOpen, onC
           </div>
         </div>
 
-        <div className="flex h-[calc(90vh-120px)]">
+        <div className="flex-1 overflow-hidden">
           {/* Sidebar */}
           <div className={`w-64 border-r ${themeClasses.borderColor} overflow-y-auto`}>
             <div className="p-4">

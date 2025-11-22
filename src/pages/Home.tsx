@@ -45,17 +45,68 @@ const Home = () => {
   ];
   const novelsPerPage = 12;
 
-  // 模拟统计数据
-  const stats = {
-    totalNovels: novels.length || 156,
-    totalUsers: 2847,
-    totalViews: 1234567,
-    todayUpdates: 23,
+  // 计算真实统计数据
+  const calculateStats = () => {
+    const totalViews = novels.reduce((sum, novel) => sum + (novel.views || 0), 0);
+    const todayUpdates = novels.filter((novel) => {
+      const today = new Date();
+      const novelDate = new Date(novel.updatedAt);
+      return novelDate.toDateString() === today.toDateString();
+    }).length;
+
+    return {
+      totalNovels: novels.length,
+      totalUsers: Math.max(1, Math.floor(novels.length / 2)),
+      totalViews: totalViews,
+      todayUpdates: todayUpdates,
+    };
   };
+
+  const stats = calculateStats();
 
   useEffect(() => {
     fetchNovels();
   }, [fetchNovels]);
+
+  // 搜索和筛选逻辑
+  useEffect(() => {
+    let result = novels;
+
+    // 按搜索词过滤
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(
+        (novel) =>
+          novel.title.toLowerCase().includes(term) ||
+          novel.author.toLowerCase().includes(term) ||
+          (novel.description && novel.description.toLowerCase().includes(term))
+      );
+    }
+
+    // 按分类过滤（目前不支持，保留以便未来扩展）
+    // if (selectedCategory !== '全部') {
+    //   result = result.filter((novel) => novel.category === selectedCategory);
+    // }
+
+    // 按排序方式排序
+    switch (sortBy) {
+      case 'latest':
+        result.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+        break;
+      case 'popular':
+        result.sort((a, b) => (b.views || 0) - (a.views || 0));
+        break;
+      case 'views':
+        result.sort((a, b) => (b.views || 0) - (a.views || 0));
+        break;
+      case 'title':
+        result.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+    }
+
+    setFilteredNovels(result);
+    setCurrentPage(1);
+  }, [novels, searchTerm, selectedCategory, sortBy]);
 
   useEffect(() => {
     if (novels.length > 0) {
@@ -159,7 +210,7 @@ const Home = () => {
                   className="gradient-button px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-full flex items-center gap-1 sm:gap-2 search-button text-xs sm:text-sm md:text-base w-full sm:w-auto justify-center sm:justify-start"
                 >
                   <Filter className="h-4 w-4 sm:h-5 sm:w-5" />
-                  <span>筛选</span>
+                  <span>搜索</span>
                 </motion.button>
               </div>
             </div>

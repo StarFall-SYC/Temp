@@ -9,9 +9,9 @@ const verificationCodes: Map<string, { code: string; expires: number }> = new Ma
 /**
  * 发送验证码到指定邮箱
  * @param email 邮箱地址
- * @returns Promise<boolean> 是否发送成功
+ * @returns Promise<{success: boolean; message: string}> 发送结果
  */
-export async function sendVerificationCode(email: string): Promise<boolean> {
+export async function sendVerificationCode(email: string): Promise<{success: boolean; message: string}> {
   try {
     // 生成6位数字验证码
     const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -26,10 +26,10 @@ export async function sendVerificationCode(email: string): Promise<boolean> {
     // 目前为了演示，我们只在控制台输出验证码
     console.log(`验证码已发送到 ${email}: ${code}`);
 
-    return true;
+    return { success: true, message: '验证码已发送，请检查您的邮箱' };
   } catch (error) {
     console.error('发送验证码失败:', error);
-    return false;
+    return { success: false, message: '发送验证码失败，请稍后重试' };
   }
 }
 
@@ -37,28 +37,28 @@ export async function sendVerificationCode(email: string): Promise<boolean> {
  * 验证邮箱验证码
  * @param email 邮箱地址
  * @param code 验证码
- * @returns boolean 验证是否成功
+ * @returns {success: boolean; message: string} 验证结果
  */
-export function verifyCode(email: string, code: string): boolean {
+export function verifyCode(email: string, code: string): {success: boolean; message: string} {
   const stored = verificationCodes.get(email);
 
   if (!stored) {
-    return false;
+    return { success: false, message: '验证码不存在或已过期' };
   }
 
   // 检查验证码是否过期
   if (Date.now() > stored.expires) {
     verificationCodes.delete(email);
-    return false;
+    return { success: false, message: '验证码已过期' };
   }
 
   // 验证码匹配
   if (stored.code === code) {
     verificationCodes.delete(email);
-    return true;
+    return { success: true, message: '验证码验证成功' };
   }
 
-  return false;
+  return { success: false, message: '验证码不正确' };
 }
 
 /**
@@ -75,3 +75,4 @@ export function cleanupExpiredCodes(): void {
 
 // 每分钟清理一次过期验证码
 setInterval(cleanupExpiredCodes, 60 * 1000);
+
